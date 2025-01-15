@@ -6,7 +6,8 @@ import './InterfaceCutePersonalAI.css';
 export function InterfaceCutePersonalAI() {
   return (
     <div className="canvas">
-      <Canvas camera={{ position: [0, 0, 10] }}>
+      <Canvas camera={{ position: [0, 0, 10] }} 
+              gl={{ antialias: true, pixelRatio: window.devicePixelRatio }}>
         <ShaderCutePersonalAI />
       </Canvas>
     </div>

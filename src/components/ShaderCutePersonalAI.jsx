@@ -11,96 +11,66 @@ const MaterialCutePersonalAI = shaderMaterial(
   },
   // vertex shader
   `
-    varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
   `,
-  // fragement shader
+  // fragment shader
   `
-    precision highp float;
-    uniform vec2 u_resolution;
-    uniform float u_time;
-    uniform float u_morphState;
-    varying vec2 vUv;
+  precision highp float;
+  uniform vec2 u_resolution;
+  uniform float u_time;
+  uniform float u_morphState;
+  varying vec2 vUv;
 
-    float smin(float a, float b, float k) {
-      float h = max(k - abs(a - b), 0.0) / k;
-      return min(a, b) - h * h * k * 0.2;
+  float smin(float a, float b, float k) {
+    float h = max(k - abs(a - b), 0.0) / k;
+    return min(a, b) - h * h * k * 0.26;
+  }
+
+  float circle(vec2 p, float radius) {
+    return length(p) - radius;
+  }
+
+  float connection(vec2 p, vec2 a, vec2 b, float width) {
+    vec2 pa = p - a;
+    vec2 ba = b - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h) - width;
+  }
+
+  float cutePersonalAI(vec2 p, float radius) {
+    vec2 positions[4];
+    positions[0] = vec2(0.0, 0.0);
+    positions[1] = vec2(0.0, radius * 2.6);
+    positions[2] = vec2(-radius * 2.2, radius * 1.4);
+    positions[3] = vec2(radius * 2.2, radius * 1.4);
+    
+    float d = circle(p - positions[0], radius);
+
+    for(int i = 1; i < 4; i++) {
+      vec2 morphedPos = positions[i] * u_morphState;
+      float c = circle(p - morphedPos, radius);
+      d = min(d, c);
+      float connWidth = radius * 0.1;
+      float conn = connection(p, positions[0], morphedPos, connWidth);
+      d = smin(d, conn, 0.06);
     }
+    return d;
+  }
 
-    float circle(vec2 p, float radius) {
-      return length(p) - radius;
-    }
-
-    float connection(vec2 p, vec2 a, vec2 b, float width) {
-      vec2 pa = p - a;
-      vec2 ba = b - a;
-      float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
-      return length(pa - ba * h) - width;
-    }
-
-    float growGraph(vec2 p, float mainRadius, float smallRadius, float spread) {
-      float graphLoreMaster = circle(p, mainRadius * 0.7);
-      float hexAngle = 1.0471966;
-      float mainDistance = mainRadius * 1.5;
-      float d = graphLoreMaster;
-      vec2 positions[6];
-      
-      for(int i = 0; i < 6; i++) {
-        positions[i] = vec2(cos(float(i) * hexAngle), sin(float(i) * hexAngle)) * mainDistance * u_morphState * 1.1;
-      }
-
-      float mediumRadius = 0.07;
-      
-      for(int i = 0; i < 6; i++) {
-        float c = circle(p - positions[i], mediumRadius);
-        d = min(d, c);
-      }
-      
-      float smallDistance = mediumRadius * 3.0;
-      float tinyRadius = 0.035;
-      
-      for(int i = 0; i < 6; i++) {
-        vec2 basePos = positions[i];
-        
-        for(int j = 0; j < 5; j++) {
-          vec2 randOffset = vec2(
-            sin(float(i) * 12.3 + float(j) * 7.1) * 1.0,
-            cos(float(i) * 8.7 + float(j) * 9.2) * 1.0
-          );
-          vec2 smallPos = basePos + randOffset * smallDistance * pow(u_morphState, 5.0);
-          float smallCircle = circle(p - smallPos, tinyRadius);
-          d = min(d, smallCircle);
-          float smallConn = connection(p, basePos, smallPos, tinyRadius * 0.075 * u_morphState);
-          d = smin(d, smallConn, 0.03);
-        }
-      }
-      
-      float connectionWidth = smallRadius * 0.075 * u_morphState;
-      float connSmoothFactor = 0.035;
-      vec2 center = vec2(0.0);
-      
-      for(int i = 0; i < 6; i++) {
-        float conn = connection(p, center, positions[i], connectionWidth);
-        d = smin(d, conn, connSmoothFactor);
-      }
-      
-      return d;
-    }
-
-    void main() {
-      vec2 uv = (vUv - 0.5) * 2.0;
-      float mainCircleRadius = 0.3;
-      float smallCircleRadius = 0.1;
-      float circleDist = circle(uv, 0.7);
-      float growingDist = growGraph(uv, mainCircleRadius, smallCircleRadius, 0.5);
-      float d = mix(circleDist, growingDist, u_morphState);
-      vec3 col = vec3(0.85);
-      col *= step(0.0, d);
-      gl_FragColor = vec4(col, 1.0);
-    }
+  void main() {
+    vec2 uv = (vUv - 0.5) * 2.0;
+    float mainCircleRadius = 0.155;
+    float circleDist = circle(uv, 0.7);
+    float ai = cutePersonalAI(uv, mainCircleRadius);
+    float d = mix(circleDist, ai, u_morphState);
+    vec3 col = vec3(0.85);
+    col *= step(0.0, d);
+    gl_FragColor = vec4(col, 1.0);
+  }
   `
 );
 
@@ -115,12 +85,12 @@ export const ShaderCutePersonalAI = () => {
   useFrame((state, delta) => {
     if (materialRef.current) {
       materialRef.current.u_time += delta;
-
+      
       if (isAnimating) {
         const diff = targetState - morphState;
         const easeFactor = 0.15;
         const newMorphState = morphState + diff * easeFactor;
-
+        
         if (Math.abs(diff) < 0.001) {
           setMorphState(targetState);
           setIsAnimating(false);
@@ -128,7 +98,7 @@ export const ShaderCutePersonalAI = () => {
           setMorphState(newMorphState);
         }
       }
-
+      
       materialRef.current.u_morphState = morphState;
     }
   });
@@ -140,7 +110,7 @@ export const ShaderCutePersonalAI = () => {
 
   return (
     <mesh onClick={handleClick}>
-      <planeGeometry args={[10, 10]} />
+      <planeGeometry args={[10, 10, 64, 64]} />  // Added more segments
       <materialCutePersonalAI ref={materialRef} />
     </mesh>
   );
