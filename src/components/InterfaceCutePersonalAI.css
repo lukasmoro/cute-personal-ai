@@ -7,4 +7,6 @@
     height: 100vh;
     overflow: hidden;
     text-align: center;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
   }

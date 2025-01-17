@@ -44,20 +44,27 @@ const MaterialCutePersonalAI = shaderMaterial(
   float cutePersonalAI(vec2 p, float radius) {
     vec2 positions[4];
     positions[0] = vec2(0.0, 0.0);
-    positions[1] = vec2(0.0, radius * 2.6);
-    positions[2] = vec2(-radius * 2.2, radius * 1.4);
-    positions[3] = vec2(radius * 2.2, radius * 1.4);
-    
-    float d = circle(p - positions[0], radius);
+    positions[1] = vec2(0.0, radius * 2.7);
+    positions[2] = vec2(-radius * 2.2, radius * 1.5);
+    positions[3] = vec2(radius * 2.2, radius * 1.5);
 
+    float d = circle(p - positions[0], radius);
+    
     for(int i = 1; i < 4; i++) {
       vec2 morphedPos = positions[i] * u_morphState;
       float c = circle(p - morphedPos, radius);
       d = min(d, c);
-      float connWidth = radius * 0.1;
+      float connWidth = radius * 0.09;
       float conn = connection(p, positions[0], morphedPos, connWidth);
       d = smin(d, conn, 0.06);
     }
+
+    vec2 finalSmallCirclePos = vec2(0.0, -radius * 2.25);
+    vec2 initialSmallCirclePos = vec2(0.0, 0.0);
+    vec2 smallCirclePos = mix(initialSmallCirclePos, finalSmallCirclePos, u_morphState);
+    float smallCircle = circle(p - smallCirclePos, radius * 0.275);
+    
+    d = min(d, smallCircle);
     return d;
   }
 
@@ -67,8 +74,14 @@ const MaterialCutePersonalAI = shaderMaterial(
     float circleDist = circle(uv, 0.7);
     float ai = cutePersonalAI(uv, mainCircleRadius);
     float d = mix(circleDist, ai, u_morphState);
+
+    // anti-aliasing
+    float pixelWidth = fwidth(d);
+    d = smoothstep(pixelWidth, -pixelWidth, d);
+    
     vec3 col = vec3(0.85);
-    col *= step(0.0, d);
+    col *= 1.0 - d;
+    
     gl_FragColor = vec4(col, 1.0);
   }
   `
@@ -85,6 +98,10 @@ export const ShaderCutePersonalAI = () => {
   useFrame((state, delta) => {
     if (materialRef.current) {
       materialRef.current.u_time += delta;
+      materialRef.current.u_resolution.set(
+        state.size.width * state.viewport.dpr,
+        state.size.height * state.viewport.dpr
+      );
       
       if (isAnimating) {
         const diff = targetState - morphState;
@@ -110,7 +127,7 @@ export const ShaderCutePersonalAI = () => {
 
   return (
     <mesh onClick={handleClick}>
-      <planeGeometry args={[10, 10, 64, 64]} />  // Added more segments
+      <planeGeometry args={[10, 10, 64, 64]} />
       <materialCutePersonalAI ref={materialRef} />
     </mesh>
   );

@@ -9,8 +9,8 @@ export function ShaderPlane({ Material, materialRef }) {
   });
 
   return (
-    <mesh position={[0, 0, -2]}>
-      <planeGeometry args={[10, 10]} />
+    <mesh position={[0, 0, 0]}>
+      <planeGeometry args={[50, 50]} />
       <primitive object={new Material()} ref={materialRef} />
     </mesh>
   );
