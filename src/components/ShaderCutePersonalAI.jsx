@@ -10,6 +10,7 @@ const MaterialCutePersonalAI = shaderMaterial(
     u_resolution: new THREE.Vector2(0, 0),
     u_morphState: 0,
   },
+  
   // vertex shader
   `
     varying vec2 vUv;

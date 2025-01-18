@@ -3,19 +3,23 @@ import { Canvas } from '@react-three/fiber';
 import { CameraController } from './CameraController';
 import { ShaderCutePersonalAI } from './ShaderCutePersonalAI';
 import { ShaderGradientUnderlay } from './ShaderGradientUnderlay';
+import { ShaderImageGeneration } from './ShaderImageGeneration';
 import { CameraFixer } from './CameraFixer';
 import './CanvasCutePersonalAI.css';
 
 export function CanvasCutePersonalAI() {
+  
+  // states & flags
   const [targetPosition, setTargetPosition] = useState([0, 0, 0]);
+  let isDown = targetPosition[1] < -5;
 
   // positions for shader meshes
   const positions = {
     center: [0, 0, 0],
-    left: [-12, 0, 0],
-    right: [10, 0, 0],
-    top: [0, 10, 0],
-    bottom: [0, -12, 0]
+    left: [-14, 0, 0],
+    right: [14, 0, 0],
+    top: [0, 8, 0],
+    bottom: [0, -7, 0]
   };
 
   // keyboard event handler
@@ -62,11 +66,12 @@ export function CanvasCutePersonalAI() {
           powerPreference: "high-performance",
         }}
       >
-        <CameraController />
+        {/* <CameraController /> */}
         <CameraFixer>
           <ShaderCutePersonalAI targetPosition={targetPosition} />
           <ShaderGradientUnderlay targetPosition={targetPosition} />
         </CameraFixer>
+        <ShaderImageGeneration isDown={isDown} /> 
       </Canvas>
     </div>
   );

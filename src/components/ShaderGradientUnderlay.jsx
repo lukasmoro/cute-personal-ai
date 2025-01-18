@@ -90,7 +90,7 @@ export const ShaderGradientUnderlay = ({ targetPosition = [0, 0.6, -1.0] }) => {
   // shader animation
   useFrame((state, delta) => {
     if (shaderRef.current) {
-      shaderRef.current.u_time += delta * .5;
+      shaderRef.current.u_time += delta * 3.0;
       shaderRef.current.u_resolution.set(
         state.size.width * state.viewport.dpr,
         state.size.height * state.viewport.dpr
