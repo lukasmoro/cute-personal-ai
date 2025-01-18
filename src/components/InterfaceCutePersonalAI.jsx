@@ -5,7 +5,7 @@ import { ShaderCutePersonalAI } from './ShaderCutePersonalAI';
 import { ShaderGradientUnderlay } from './ShaderGradientUnderlay';
 import './InterfaceCutePersonalAI.css';
 
-// Camera animation component
+// cine machine
 function CameraAnimation({ position }) {
   const { camera } = useThree();
   
