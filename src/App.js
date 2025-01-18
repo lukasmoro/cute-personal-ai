@@ -1,10 +1,10 @@
 import './App.css';
-import { InterfaceCutePersonalAI } from './components/InterfaceCutePersonalAI';
+import { CanvasCutePersonalAI } from './components/CanvasCutePersonalAI';
 
 function App() {
   return (
     <div className="App">
-      <InterfaceCutePersonalAI/>
+      <CanvasCutePersonalAI/>
     </div>
   );
 }
