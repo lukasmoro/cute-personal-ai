@@ -21,6 +21,7 @@ export function CanvasCutePersonalAI() {
   // keyboard event handler
   useEffect(() => {
     const handleEvent = (event) => {
+      
       switch(event.key.toLowerCase()) {
         case 'arrowleft':
           setTargetPosition(positions.left);
@@ -38,6 +39,7 @@ export function CanvasCutePersonalAI() {
           setTargetPosition(positions.center);
           break;
       }
+    
     };
     
     window.addEventListener('keydown', handleEvent);

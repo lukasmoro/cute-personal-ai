@@ -18,7 +18,8 @@ const MaterialCutePersonalAI = shaderMaterial(
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `,
-  // fragment shader (your existing shader code)
+  
+  // fragment shader
   `
     precision highp float;
     uniform vec2 u_resolution;
@@ -122,6 +123,7 @@ export const ShaderCutePersonalAI = ({ targetPosition = [0, 0, 0] }) => {
     );
 
     if (isAnimating) {
+      
       const diff = targetState - morphState;
       const newMorphState = morphState + diff * 0.15;
 
