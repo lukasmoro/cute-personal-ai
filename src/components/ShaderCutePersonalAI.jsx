@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { shaderMaterial } from '@react-three/drei';
 import { extend, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { MathUtils } from 'three';
+import { shaderMaterial } from '@react-three/drei';
 
 const MaterialCutePersonalAI = shaderMaterial(
   {
@@ -17,7 +18,7 @@ const MaterialCutePersonalAI = shaderMaterial(
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `,
-  // fragment shader
+  // fragment shader (your existing shader code)
   `
     precision highp float;
     uniform vec2 u_resolution;
@@ -74,7 +75,6 @@ const MaterialCutePersonalAI = shaderMaterial(
       float ai = cutePersonalAI(uv, mainCircleRadius);
       float d = mix(circleDist, ai, u_morphState);
       
-      // anti-aliasing
       float pixelWidth = fwidth(d);
       d = smoothstep(pixelWidth, -pixelWidth, d);
       
@@ -85,43 +85,66 @@ const MaterialCutePersonalAI = shaderMaterial(
 
 extend({ MaterialCutePersonalAI });
 
-export const ShaderCutePersonalAI = () => {
-  const materialRef = useRef();
+export const ShaderCutePersonalAI = ({ targetPosition = [0, 0, 0] }) => {
+  
+  // references
+  const shaderRef = useRef();
+  const meshRef = useRef();
+
+  // states
   const [morphState, setMorphState] = useState(0);
+  const [currentPosition, setCurrentPosition] = useState([0, 0, 0]);
   const [isAnimating, setIsAnimating] = useState(false);
   const [targetState, setTargetState] = useState(0);
 
-  useFrame((state, delta) => {
-    if (materialRef.current) {
-      materialRef.current.u_time += delta;
-      materialRef.current.u_resolution.set(
-        state.size.width * state.viewport.dpr,
-        state.size.height * state.viewport.dpr
-      );
-      if (isAnimating) {
-        const diff = targetState - morphState;
-        const easeFactor = 0.15;
-        const newMorphState = morphState + diff * easeFactor;
-        if (Math.abs(diff) < 0.001) {
-          setMorphState(targetState);
-          setIsAnimating(false);
-        } else {
-          setMorphState(newMorphState);
-        }
-      }
-      materialRef.current.u_morphState = morphState;
-    }
-  });
-
+  // event handler
   const handleClick = () => {
     setTargetState(morphState < 0.5 ? 1.0 : 0.0);
     setIsAnimating(true);
   };
 
+  // position animation
+  useFrame(() => {
+    if (!meshRef.current) return;
+    const newX = MathUtils.lerp(currentPosition[0], targetPosition[0], 0.05);
+    const newY = MathUtils.lerp(currentPosition[1], targetPosition[1], 0.05);
+    const newZ = MathUtils.lerp(currentPosition[2], targetPosition[2], 0.05);
+    setCurrentPosition([newX, newY, newZ]);
+  });
+
+  // shader animation
+  useFrame((state, delta) => {
+    if (!shaderRef.current) return;
+    shaderRef.current.u_time += delta;
+    shaderRef.current.u_resolution.set(
+      state.size.width * state.viewport.dpr,
+      state.size.height * state.viewport.dpr
+    );
+
+    if (isAnimating) {
+      const diff = targetState - morphState;
+      const newMorphState = morphState + diff * 0.15;
+
+      if (Math.abs(diff) < 0.001) {
+        setMorphState(targetState);
+        setIsAnimating(false);
+      } else {
+        setMorphState(newMorphState);
+      }
+    
+    }
+
+    shaderRef.current.u_morphState = morphState;
+  });
+
   return (
-    <mesh onClick={handleClick}>
+    <mesh 
+      onClick={handleClick} 
+      ref={meshRef}
+      position={currentPosition}
+    >
       <planeGeometry args={[10, 10, 64, 64]} />
-      <materialCutePersonalAI ref={materialRef} transparent />
+      <materialCutePersonalAI ref={shaderRef} transparent />
     </mesh>
   );
 };

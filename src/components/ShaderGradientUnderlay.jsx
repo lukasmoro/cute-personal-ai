@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { shaderMaterial } from '@react-three/drei';
 import { extend, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { MathUtils } from 'three';
 
 const MaterialGradientUnderlay = shaderMaterial(
   {
@@ -10,6 +11,7 @@ const MaterialGradientUnderlay = shaderMaterial(
     u_color1: new THREE.Color('#FFB700'),
     u_color2: new THREE.Color('#4000FF'),
   },
+  
   // vertex shader
   `
   varying vec2 vUv;
@@ -18,6 +20,7 @@ const MaterialGradientUnderlay = shaderMaterial(
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
   `,
+  
   // fragment shader
   `
   precision highp float;
@@ -66,13 +69,29 @@ const MaterialGradientUnderlay = shaderMaterial(
 
 extend({ MaterialGradientUnderlay });
 
-export const ShaderGradientUnderlay = () => {
-  const materialRef = useRef();
+export const ShaderGradientUnderlay = ({ targetPosition = [0, 0.6, -1.0] }) => {
   
+  // references
+  const shaderRef = useRef();
+  const meshRef = useRef();
+
+  // states
+  const [currentPosition, setCurrentPosition] = useState([ 0, 0.6, -1.0]);
+
+  // position animation
+  useFrame(() => {
+    if (!meshRef.current) return;
+    const newX = MathUtils.lerp(currentPosition[0], targetPosition[0] + 0 , 0.05);
+    const newY = MathUtils.lerp(currentPosition[1], targetPosition[1] + 0.6, 0.05);
+    const newZ = MathUtils.lerp(currentPosition[2], targetPosition[2] - 1.0, 0.05);
+    setCurrentPosition([newX, newY, newZ]);
+  });
+  
+  // shader animation
   useFrame((state, delta) => {
-    if (materialRef.current) {
-      materialRef.current.u_time += delta * .5;
-      materialRef.current.u_resolution.set(
+    if (shaderRef.current) {
+      shaderRef.current.u_time += delta * .5;
+      shaderRef.current.u_resolution.set(
         state.size.width * state.viewport.dpr,
         state.size.height * state.viewport.dpr
       );
@@ -80,9 +99,12 @@ export const ShaderGradientUnderlay = () => {
   });
 
   return (
-    <mesh position={[0, 0.6, -1]}>
-      <planeGeometry args={[12, 12]} />
-      <materialGradientUnderlay ref={materialRef} transparent />
+    <mesh 
+      position={currentPosition} 
+      ref={meshRef}
+    >
+      <planeGeometry args={[10, 10]} />
+      <materialGradientUnderlay ref={shaderRef} transparent />
     </mesh>
   );
 };
