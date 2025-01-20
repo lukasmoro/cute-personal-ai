@@ -1,7 +1,9 @@
 import React, {useState, useEffect} from 'react';
 import { Canvas } from '@react-three/fiber';
 import { CameraController } from './CameraController';
+import { VoiceInputController } from './VoiceInputController';
 import { ShaderCutePersonalAI } from './ShaderCutePersonalAI';
+import { ShaderVoiceInput } from './ShaderVoiceInput'
 import { ShaderGradientUnderlay } from './ShaderGradientUnderlay';
 import { ShaderImageGeneration } from './ShaderImageGeneration';
 import { CameraFixer } from './CameraFixer';
@@ -12,6 +14,7 @@ export function CanvasCutePersonalAI() {
   // states & flags
   const [targetPosition, setTargetPosition] = useState([0, 0, 0]);
   let isDown = targetPosition[1] < -5;
+  const [audioData, setAudioData] = useState({ low: 0, mid: 0, high: 0, average: 0 });
 
   // positions for shader meshes
   const positions = {
@@ -67,8 +70,10 @@ export function CanvasCutePersonalAI() {
         }}
       >
         {/* <CameraController /> */}
+        <VoiceInputController onAudioData={setAudioData} />
         <CameraFixer>
           <ShaderCutePersonalAI targetPosition={targetPosition} />
+          <ShaderVoiceInput targetPosition = {targetPosition} audioData={audioData}/>
           <ShaderGradientUnderlay targetPosition={targetPosition} />
         </CameraFixer>
         <ShaderImageGeneration isDown={isDown} /> 

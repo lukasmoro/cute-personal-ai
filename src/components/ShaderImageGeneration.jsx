@@ -11,70 +11,66 @@ const MaterialImageGeneration = shaderMaterial(
     u_texture: null,
     u_blur: 2.0,
   },
-
   // vertex shader
   `
-    varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
   `,
-
   // fragment shader
   `
-    precision highp float;
-    uniform vec2 u_resolution;
-    uniform float u_time;
-    uniform float u_scale;
-    uniform float u_blur;
-    uniform sampler2D u_texture;
-    varying vec2 vUv;
+  precision highp float;
+  uniform vec2 u_resolution;
+  uniform float u_time;
+  uniform float u_scale;
+  uniform float u_blur;
+  uniform sampler2D u_texture;
+  varying vec2 vUv;
 
-    vec4 gaussianBlur(sampler2D image, vec2 uv, vec2 resolution, float radius) {
-      vec4 color = vec4(0.0);
-      float total = 0.0;
-      vec2 pixel = vec2(1.0) / resolution;
-      
-      for(float x = -4.0; x <= 4.0; x += 1.0) {
-        for(float y = -4.0; y <= 4.0; y += 1.0) {
-          vec2 offset = vec2(x, y) * pixel * radius;
-          float weight = exp(-(x*x + y*y) / (2.0 * 8.0));
-          color += texture2D(image, uv + offset) * weight;
-          total += weight;
-        }
+  vec4 gaussianBlur(sampler2D image, vec2 uv, vec2 resolution, float radius) {
+    vec4 color = vec4(0.0);
+    float total = 0.0;
+    vec2 pixel = vec2(1.0) / resolution;
+    
+    for(float x = -4.0; x <= 4.0; x += 1.0) {
+      for(float y = -4.0; y <= 4.0; y += 1.0) {
+        vec2 offset = vec2(x, y) * pixel * radius;
+        float weight = exp(-(x*x + y*y) / (2.0 * 8.0));
+        color += texture2D(image, uv + offset) * weight;
+        total += weight;
       }
-      
-      return color / total;
     }
+    return color / total;
+  }
 
-    void main() {
+  void main() {
     vec2 uv = (vUv - 0.5) * 2.0;
     uv = uv / u_scale;
-    
     float dist = length(uv);
     float innerRadius = 0.4;
     float outerRadius = 0.7;
     float edgeFade = 1.0 - smoothstep(innerRadius, outerRadius, dist);
+    
     vec4 texColor = texture2D(u_texture, vUv);
-
     if (u_blur > 0.0) {
-        texColor = gaussianBlur(u_texture, vUv, u_resolution, u_blur);
+      texColor = gaussianBlur(u_texture, vUv, u_resolution, u_blur);
     }
 
-    float finalAlpha = texColor.a * edgeFade * u_scale;
-
-    gl_FragColor = vec4(texColor.rgb * finalAlpha, finalAlpha);
-    }
+    // Preserve the original color intensity while only using edgeFade for alpha
+    float finalAlpha = edgeFade * u_scale;
+    gl_FragColor = vec4(texColor.rgb, finalAlpha);
+  }
   `
 );
 
 extend({ MaterialImageGeneration });
 
 export const ShaderImageGeneration = ({ isDown = false }) => {
-  // references 
+  // references
   const shaderRef = useRef();
-
+  
   // constants
   const texture = useLoader(THREE.TextureLoader, './lavender.jpg');
   const BLUR_STRENGTH = 2;
@@ -87,7 +83,7 @@ export const ShaderImageGeneration = ({ isDown = false }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [targetScale, setTargetScale] = useState(0);
   const [blurStartTime, setBlurStartTime] = useState(null);
-  
+
   useEffect(() => {
     if (isDown) {
       setTargetScale(1.0);
@@ -99,7 +95,7 @@ export const ShaderImageGeneration = ({ isDown = false }) => {
     }
     setIsAnimating(true);
   }, [isDown]);
-  
+
   useFrame((state, delta) => {
     if (!shaderRef.current) return;
     
@@ -108,7 +104,7 @@ export const ShaderImageGeneration = ({ isDown = false }) => {
       state.size.width * state.viewport.dpr,
       state.size.height * state.viewport.dpr
     );
-    
+
     // scale
     if (isAnimating) {
       const diff = targetScale - scale;
@@ -122,7 +118,7 @@ export const ShaderImageGeneration = ({ isDown = false }) => {
         setScale(newScale);
       }
     }
-    
+
     // blur
     if (blurStartTime && isDown) {
       const elapsed = (Date.now() - blurStartTime) / 1000;
@@ -135,12 +131,12 @@ export const ShaderImageGeneration = ({ isDown = false }) => {
         setBlur(0);
       }
     }
-    
+
     shaderRef.current.u_scale = scale;
     shaderRef.current.u_blur = blur;
     shaderRef.current.u_texture = texture;
   });
-  
+
   return (
     <mesh position={[0, 2, -3]}>
       <planeGeometry args={[23, 23, 64, 64]} />

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { extend, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { MathUtils } from 'three';
@@ -9,9 +9,10 @@ const MaterialCutePersonalAI = shaderMaterial(
     u_time: 0,
     u_resolution: new THREE.Vector2(0, 0),
     u_morphState: 0,
+    u_dotVisibility: 1.0,
   },
   
-  // vertex shader
+  // vertex shader remains the same
   `
     varying vec2 vUv;
     void main() {
@@ -26,6 +27,7 @@ const MaterialCutePersonalAI = shaderMaterial(
     uniform vec2 u_resolution;
     uniform float u_time;
     uniform float u_morphState;
+    uniform float u_dotVisibility;
     varying vec2 vUv;
 
     float smin(float a, float b, float k) {
@@ -66,6 +68,7 @@ const MaterialCutePersonalAI = shaderMaterial(
       vec2 initialSmallCirclePos = vec2(0.0, 0.0);
       vec2 smallCirclePos = mix(initialSmallCirclePos, finalSmallCirclePos, u_morphState);
       float smallCircle = circle(p - smallCirclePos, radius * 0.275);
+      smallCircle = mix(1000.0, smallCircle, u_dotVisibility);
       d = min(d, smallCircle);
       return d;
     }
@@ -87,7 +90,11 @@ const MaterialCutePersonalAI = shaderMaterial(
 
 extend({ MaterialCutePersonalAI });
 
-export const ShaderCutePersonalAI = ({ targetPosition = [0, 0, 0] }) => {
+export const ShaderCutePersonalAI = ({ 
+  targetPosition = [0, 0, 0],
+  dotVisible = true,
+  onAnimationComplete = () => {}
+}) => {
   
   // references
   const shaderRef = useRef();
@@ -98,11 +105,20 @@ export const ShaderCutePersonalAI = ({ targetPosition = [0, 0, 0] }) => {
   const [currentPosition, setCurrentPosition] = useState([0, 0, 0]);
   const [isAnimating, setIsAnimating] = useState(false);
   const [targetState, setTargetState] = useState(0);
+  const [localDotVisible, setLocalDotVisible] = useState(true);
+
+  // update dot visibility
+  useEffect(() => {
+    if (shaderRef.current) {
+      shaderRef.current.u_dotVisibility = localDotVisible ? 1.0 : 0.0;
+    }
+  }, [localDotVisible]);
 
   // event handler
   const handleClick = () => {
     setTargetState(morphState < 0.5 ? 1.0 : 0.0);
     setIsAnimating(true);
+    setLocalDotVisible(true); // Reset dot visibility when animation starts
   };
 
   // position animation
@@ -124,17 +140,17 @@ export const ShaderCutePersonalAI = ({ targetPosition = [0, 0, 0] }) => {
     );
 
     if (isAnimating) {
-      
       const diff = targetState - morphState;
       const newMorphState = morphState + diff * 0.15;
 
       if (Math.abs(diff) < 0.001) {
         setMorphState(targetState);
         setIsAnimating(false);
+        setLocalDotVisible(false);
+        onAnimationComplete();
       } else {
         setMorphState(newMorphState);
       }
-    
     }
 
     shaderRef.current.u_morphState = morphState;
