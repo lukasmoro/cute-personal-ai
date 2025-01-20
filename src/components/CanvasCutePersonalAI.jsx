@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import { Canvas } from '@react-three/fiber';
-import { CameraController } from './CameraController';
-import { VoiceInputController } from './VoiceInputController';
+// import { ControllerCamera } from './ControllerCamera';
+import { ControllerVoiceInput } from './ControllerVoiceInput';
 import { ShaderCutePersonalAI } from './ShaderCutePersonalAI';
 import { ShaderVoiceInput } from './ShaderVoiceInput'
 import { ShaderGradientUnderlay } from './ShaderGradientUnderlay';
@@ -16,19 +16,18 @@ export function CanvasCutePersonalAI() {
   let isDown = targetPosition[1] < -5;
   const [audioData, setAudioData] = useState({ low: 0, mid: 0, high: 0, average: 0 });
 
-  // positions for shader meshes
-  const positions = {
-    center: [0, 0, 0],
-    left: [-14, 0, 0],
-    right: [14, 0, 0],
-    top: [0, 8, 0],
-    bottom: [0, -7, 0]
-  };
-
-  // keyboard event handler
   useEffect(() => {
+
+    // positions for shader meshes
+    const positions = {
+      center: [0, 0, 0],
+      left: [-14, 0, 0],
+      right: [14, 0, 0],
+      top: [0, 8, 0],
+      bottom: [0, -7, 0]
+    };
+
     const handleEvent = (event) => {
-      
       switch(event.key.toLowerCase()) {
         case 'arrowleft':
           setTargetPosition(positions.left);
@@ -45,10 +44,11 @@ export function CanvasCutePersonalAI() {
         case 'a':
           setTargetPosition(positions.center);
           break;
+        default:
+          break;
       }
-    
     };
-    
+
     window.addEventListener('keydown', handleEvent);
     return () => window.removeEventListener('keydown', handleEvent);
   }, []);
@@ -69,8 +69,8 @@ export function CanvasCutePersonalAI() {
           powerPreference: "high-performance",
         }}
       >
-        {/* <CameraController /> */}
-        <VoiceInputController onAudioData={setAudioData} />
+        {/* <ControllerCamera /> */}
+        <ControllerVoiceInput onAudioData={setAudioData} />
         <CameraFixer>
           <ShaderCutePersonalAI targetPosition={targetPosition} />
           <ShaderVoiceInput targetPosition = {targetPosition} audioData={audioData}/>

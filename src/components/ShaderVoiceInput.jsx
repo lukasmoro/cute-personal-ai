@@ -8,7 +8,6 @@ const MaterialVoiceInput = shaderMaterial(
   {
     u_time: 0,
     u_resolution: new THREE.Vector2(0, 0),
-    u_morphState: 0,
     u_audioLow: 0,
     u_audioMid: 0,
     u_audioHigh: 0,
@@ -27,7 +26,6 @@ const MaterialVoiceInput = shaderMaterial(
   precision highp float;
   uniform vec2 u_resolution;
   uniform float u_time;
-  uniform float u_morphState;
   uniform float u_audioLow;
   uniform float u_audioMid;
   uniform float u_audioHigh;
@@ -40,18 +38,13 @@ const MaterialVoiceInput = shaderMaterial(
 
   void main() {
     vec2 uv = (vUv - 0.5) * 2.0;
-    
-    // Use audio values to modify the visualization
-    float radius = 0.155 + u_audioAverage * 0.1;
+    float radius = 0.155;
     vec2 dotOffset = vec2(0.0, -radius * 2.25);
-    vec2 dotPos = dotOffset + vec2(u_audioLow * 0.1, u_audioHigh * 0.1);
-    float dot = circle(uv - dotPos, radius * (0.275 + u_audioMid * 0.2));
-    
+    vec2 dotPos = dotOffset;
+    float dot = circle(uv - dotPos, radius * 0.275 * (1.0 + u_audioAverage * 5.0)  );
     float pixelWidth = fwidth(dot);
     float alpha = smoothstep(pixelWidth, -pixelWidth, dot);
-    
-    // Add some color variation based on audio
-    vec3 color = vec3(1.0 + u_audioLow * 0.5, 1.0 + u_audioMid * 0.5, 1.0 + u_audioHigh * 0.5);
+    vec3 color = vec3(1.0 , 1.0 , 1.0);
     gl_FragColor = vec4(color, alpha);
   }
   `

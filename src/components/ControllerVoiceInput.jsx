@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-export const VoiceInputController = ({ onAudioData }) => {
+export const ControllerVoiceInput = ({ onAudioData }) => {
   const [audioContext, setAudioContext] = useState(null);
   const [analyzer, setAnalyzer] = useState(null);
   const [mediaStream, setMediaStream] = useState(null);
@@ -10,13 +10,10 @@ export const VoiceInputController = ({ onAudioData }) => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const context = new (window.AudioContext || window.webkitAudioContext)();
       const analyzerNode = context.createAnalyser();
-      
       analyzerNode.fftSize = 256;
       analyzerNode.smoothingTimeConstant = 0.8;
-      
       const source = context.createMediaStreamSource(stream);
       source.connect(analyzerNode);
-      
       setAudioContext(context);
       setAnalyzer(analyzerNode);
       setMediaStream(stream);
@@ -25,11 +22,11 @@ export const VoiceInputController = ({ onAudioData }) => {
     }
   }, []);
 
-  // Initialize audio automatically on component mount
+  // initialize audio on component mount
   useEffect(() => {
     initializeAudio();
     
-    // Cleanup function
+    // cleanup
     return () => {
       if (mediaStream) {
         mediaStream.getTracks().forEach(track => track.stop());
@@ -38,7 +35,7 @@ export const VoiceInputController = ({ onAudioData }) => {
         audioContext.close();
       }
     };
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   useEffect(() => {
     let animationFrame;
@@ -48,16 +45,11 @@ export const VoiceInputController = ({ onAudioData }) => {
 
       const dataArray = new Uint8Array(analyzer.frequencyBinCount);
       analyzer.getByteFrequencyData(dataArray);
-
-      // Split the frequency data into low, mid, and high ranges
       const lowEnd = Math.floor(dataArray.length * 0.33);
       const midEnd = Math.floor(dataArray.length * 0.66);
-
       const lowFreq = Array.from(dataArray.slice(0, lowEnd));
       const midFreq = Array.from(dataArray.slice(lowEnd, midEnd));
       const highFreq = Array.from(dataArray.slice(midEnd));
-
-      // Calculate averages for each range
       const average = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length / 255;
 
       const audioData = {
@@ -85,4 +77,4 @@ export const VoiceInputController = ({ onAudioData }) => {
   return null;
 };
 
-export default VoiceInputController;
+export default ControllerVoiceInput;
