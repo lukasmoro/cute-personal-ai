@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-export const ControllerVoiceInput = ({ onAudioData }) => {
+export const ControllerVoiceInput = ({ onAudioData, isListening }) => {
   const [audioContext, setAudioContext] = useState(null);
   const [analyzer, setAnalyzer] = useState(null);
   const [mediaStream, setMediaStream] = useState(null);
@@ -22,11 +22,10 @@ export const ControllerVoiceInput = ({ onAudioData }) => {
     }
   }, []);
 
-  // initialize audio on component mount
+  // Initialize audio on component mount
   useEffect(() => {
     initializeAudio();
-    
-    // cleanup
+    // Cleanup
     return () => {
       if (mediaStream) {
         mediaStream.getTracks().forEach(track => track.stop());
@@ -41,15 +40,21 @@ export const ControllerVoiceInput = ({ onAudioData }) => {
     let animationFrame;
 
     const analyzeAudio = () => {
-      if (!analyzer) return;
+      if (!analyzer || !isListening) {
+        // If not listening, send zero values
+        onAudioData({ low: 0, mid: 0, high: 0, average: 0 });
+        return;
+      }
 
       const dataArray = new Uint8Array(analyzer.frequencyBinCount);
       analyzer.getByteFrequencyData(dataArray);
+      
       const lowEnd = Math.floor(dataArray.length * 0.33);
       const midEnd = Math.floor(dataArray.length * 0.66);
       const lowFreq = Array.from(dataArray.slice(0, lowEnd));
       const midFreq = Array.from(dataArray.slice(lowEnd, midEnd));
       const highFreq = Array.from(dataArray.slice(midEnd));
+
       const average = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length / 255;
 
       const audioData = {
@@ -63,18 +68,14 @@ export const ControllerVoiceInput = ({ onAudioData }) => {
       animationFrame = requestAnimationFrame(analyzeAudio);
     };
 
-    if (analyzer) {
-      analyzeAudio();
-    }
+    analyzeAudio();
 
     return () => {
       if (animationFrame) {
         cancelAnimationFrame(animationFrame);
       }
     };
-  }, [analyzer, onAudioData]);
+  }, [analyzer, onAudioData, isListening]);
 
   return null;
 };
-
-export default ControllerVoiceInput;

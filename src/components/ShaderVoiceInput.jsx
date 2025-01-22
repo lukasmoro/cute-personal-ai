@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { extend, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { MathUtils } from 'three';
@@ -41,10 +41,10 @@ const MaterialVoiceInput = shaderMaterial(
     float radius = 0.155;
     vec2 dotOffset = vec2(0.0, -radius * 2.25);
     vec2 dotPos = dotOffset;
-    float dot = circle(uv - dotPos, radius * 0.275 * (1.0 + u_audioAverage * 5.0)  );
+    float dot = circle(uv - dotPos, radius * 0.275 * (1.0 + u_audioAverage * 5.0));
     float pixelWidth = fwidth(dot);
     float alpha = smoothstep(pixelWidth, -pixelWidth, dot);
-    vec3 color = vec3(1.0 , 1.0 , 1.0);
+    vec3 color = vec3(1.0, 1.0, 1.0);
     gl_FragColor = vec4(color, alpha);
   }
   `
@@ -59,7 +59,7 @@ export const ShaderVoiceInput = ({
   const shaderRef = useRef();
   const meshRef = useRef();
   const [currentPosition, setCurrentPosition] = useState(targetPosition);
-
+  
   useFrame(() => {
     if (!meshRef.current) return;
     const newX = MathUtils.lerp(currentPosition[0], targetPosition[0], 0.05);

@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react';
 import { Canvas } from '@react-three/fiber';
 // import { ControllerCamera } from './ControllerCamera';
 import { ControllerVoiceInput } from './ControllerVoiceInput';
+import { ProviderWhisper } from './ProviderWhisper';
 import { ShaderCutePersonalAI } from './ShaderCutePersonalAI';
 import { ShaderVoiceInput } from './ShaderVoiceInput'
 import { ShaderGradientUnderlay } from './ShaderGradientUnderlay';
@@ -9,12 +10,40 @@ import { ShaderImageGeneration } from './ShaderImageGeneration';
 import { CameraFixer } from './CameraFixer';
 import './CanvasCutePersonalAI.css';
 
+
 export function CanvasCutePersonalAI() {
   
   // states & flags
   const [targetPosition, setTargetPosition] = useState([0, 0, 0]);
   let isDown = targetPosition[1] < -5;
   const [audioData, setAudioData] = useState({ low: 0, mid: 0, high: 0, average: 0 });
+  const [isListening, setIsListening] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === 'Space' && !e.repeat) {
+        setIsListening(true);
+        setIsRecording(true);
+      }
+    };
+
+    const handleKeyUp = (e) => {
+      if (e.code === 'Space') {
+        setIsListening(false);
+        setIsRecording(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
 
   useEffect(() => {
 
@@ -70,7 +99,7 @@ export function CanvasCutePersonalAI() {
         }}
       >
         {/* <ControllerCamera /> */}
-        <ControllerVoiceInput onAudioData={setAudioData} />
+        <ControllerVoiceInput onAudioData={setAudioData} isListening={isListening}/>
         <CameraFixer>
           <ShaderCutePersonalAI targetPosition={targetPosition} />
           <ShaderVoiceInput targetPosition = {targetPosition} audioData={audioData}/>
@@ -78,6 +107,7 @@ export function CanvasCutePersonalAI() {
         </CameraFixer>
         <ShaderImageGeneration isDown={isDown} /> 
       </Canvas>
+      <ProviderWhisper isRecording={isRecording} />
     </div>
   );
 }
