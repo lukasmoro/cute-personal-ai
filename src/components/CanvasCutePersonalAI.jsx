@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 // import { ControllerCamera } from './ControllerCamera';
 import { ControllerVoiceInput } from './ControllerVoiceInput';
 import { ProviderWhisper } from './ProviderWhisper';
+import { ProviderTTS } from './ProviderTTS';
 import { ShaderCutePersonalAI } from './ShaderCutePersonalAI';
 import { ShaderVoiceInput } from './ShaderVoiceInput'
 import { ShaderGradientUnderlay } from './ShaderGradientUnderlay';
@@ -19,6 +20,7 @@ export function CanvasCutePersonalAI() {
   const [audioData, setAudioData] = useState({ low: 0, mid: 0, high: 0, average: 0 });
   const [isListening, setIsListening] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isTalking, setIsTalking] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -32,6 +34,8 @@ export function CanvasCutePersonalAI() {
       if (e.code === 'Space') {
         setIsListening(false);
         setIsRecording(false);
+        setIsTalking(true);
+        setTimeout(() => setIsTalking(false), 100);
       }
     };
 
@@ -107,7 +111,11 @@ export function CanvasCutePersonalAI() {
         </CameraFixer>
         <ShaderImageGeneration isDown={isDown} /> 
       </Canvas>
-      <ProviderWhisper isRecording={isRecording} />
+      <div className='providers'>
+        <ProviderWhisper isRecording={isRecording} />
+        <ProviderTTS isTalking={isTalking}/>
+      </div>
     </div>
+    
   );
 }
