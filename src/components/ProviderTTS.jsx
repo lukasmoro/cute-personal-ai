@@ -1,63 +1,78 @@
 import { useState, useEffect } from 'react';
 import { KokoroTTS } from './kokoro-js/dist/kokoro.js';
 
+const phrases = [
+  "Hi Lukas, what is on your mind today",
+  "Oh that is cool what about it? This one right?",
+  "Oh that is cool. What about it? This one right?",
+  "We have talked about something along those lines a while ago when you visited Kunstmuseum Bregenz. Do you remember? How do you feel about the future?",
+  "Ok, we can start by finding a rough first direction. Tell me your ideas and I will generate some starting points."
+];
+
 const ProviderTTS = ({ isTalking }) => {
-  const [tts, setTts] = useState(null);
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
-  const predefinedText = "In Heidegger's first major text, Being and Time (1927), Dasein is introduced as a term for the type of being that humans possess. Heidegger believed that Dasein already has a pre-ontological and concrete understanding that shapes how it lives, which he analyzed in terms of the unitary structure of being-in-the-world. Heidegger used this analysis to approach the question of the meaning of being; that is, the question of how entities appear as the specific entities they are. In other words, Heidegger's governing question of being is concerned with what makes beings intelligible as beings.";
+  const [audioUrls, setAudioUrls] = useState([]);
+  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
 
   useEffect(() => {
     const initTTS = async () => {
       try {
+        console.log('Loading TTS model...');
+        const startTime = performance.now();
+        
         const ttsInstance = await KokoroTTS.from_pretrained(
           "onnx-community/Kokoro-82M-ONNX",
           { dtype: "q8" }
         );
-        setTts(ttsInstance);
+        
+        console.log(`Model loaded in ${performance.now() - startTime}ms`);
+        
+        const urls = [];
+        for (const phrase of phrases) {
+          const genStart = performance.now();
+          const audio = await ttsInstance.generate(phrase, { voice: "af_sky" });
+          console.log(`Generated "${phrase}" in ${performance.now() - genStart}ms`);
+          
+          const wavBuffer = audio.toWav();
+          const audioBlob = new Blob([wavBuffer], { type: 'audio/wav' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          urls.push(audioUrl);
+        }
+        
+        setAudioUrls(urls);
         setLoading(false);
+        console.log('All audio pre-generated');
       } catch (error) {
         console.error("TTS loading failed:", error);
         setLoading(false);
       }
     };
+    
+    const urls = [];
     initTTS();
+
+    return () => {
+      urls.forEach(url => URL.revokeObjectURL(url));
+    };
   }, []);
 
   useEffect(() => {
     const handleSpeak = async () => {
-      if (!tts || loading || playing) return;
+      if (loading || playing || audioUrls.length === 0) return;
+      
       setPlaying(true);
       try {
-        const t0 = performance.now();
-        
-        const audio = await tts.generate(predefinedText, { voice: "af_sky" });
-        const t1 = performance.now();
-        
-        const wavBuffer = audio.toWav();
-        const t2 = performance.now();
-        
-        const audioBlob = new Blob([wavBuffer], { type: 'audio/wav' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const t3 = performance.now();
-  
-        console.log({
-          'Generation time': `${t1 - t0}ms`,
-          'WAV conversion': `${t2 - t1}ms`,
-          'Blob creation': `${t3 - t2}ms`,
-          'Total time': `${t3 - t0}ms`
-        });
-
-        const audioEl = new Audio(audioUrl);
+        const audioEl = new Audio(audioUrls[currentPhraseIndex]);
         
         audioEl.onended = () => {
           setPlaying(false);
-          URL.revokeObjectURL(audioUrl);
+          setCurrentPhraseIndex((prev) => (prev + 1) % phrases.length);
         };
         
         await audioEl.play();
       } catch (error) {
-        console.error('TTS error:', error);
+        console.error('Playback error:', error);
         setPlaying(false);
       }
     };
@@ -65,7 +80,12 @@ const ProviderTTS = ({ isTalking }) => {
     if (isTalking) {
       handleSpeak();
     }
-  }, [isTalking, tts, loading, playing]);
+  }, [isTalking, loading, playing, currentPhraseIndex, audioUrls]);
+
+  // Display loading state
+  if (loading) {
+    return <div className="text-gray-600">Generating audio files...</div>;
+  }
 
   return null;
 };
