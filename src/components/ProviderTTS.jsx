@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { KokoroTTS } from './kokoro-js/dist/kokoro.js';
 
-const phrases = [
+// stream of thought should be moved to parent component or even made the new highest order node
+// besides answers it should contain trigger point for mimics & gestures
+// trigger points should refer to json files with structured outputs that influence the assistant visuals
+// other trigger points should initiate actions like image retrieval & generation (image, code, nodes), pulling up chats & agent space
+
+const streamOfThought = [
   "Hi Lukas, what is on your mind today",
   "Oh that is cool what about it? This one right?",
-  "Oh that is cool. What about it? This one right?",
   "We have talked about something along those lines a while ago when you visited Kunstmuseum Bregenz. Do you remember? How do you feel about the future?",
   "Ok, we can start by finding a rough first direction. Tell me your ideas and I will generate some starting points."
 ];
@@ -13,7 +17,7 @@ const ProviderTTS = ({ isTalking }) => {
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [audioUrls, setAudioUrls] = useState([]);
-  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
+  const [thoughtIndex, setThoughtIndex] = useState(0);
 
   useEffect(() => {
     const initTTS = async () => {
@@ -29,11 +33,10 @@ const ProviderTTS = ({ isTalking }) => {
         console.log(`Model loaded in ${performance.now() - startTime}ms`);
         
         const urls = [];
-        for (const phrase of phrases) {
+        for (const thought of streamOfThought) {
           const genStart = performance.now();
-          const audio = await ttsInstance.generate(phrase, { voice: "af_sky" });
-          console.log(`Generated "${phrase}" in ${performance.now() - genStart}ms`);
-          
+          const audio = await ttsInstance.generate(thought, { voice: "af_sky" });
+          console.log(`Generated "${thought}" in ${performance.now() - genStart}ms`);
           const wavBuffer = audio.toWav();
           const audioBlob = new Blob([wavBuffer], { type: 'audio/wav' });
           const audioUrl = URL.createObjectURL(audioBlob);
@@ -63,11 +66,11 @@ const ProviderTTS = ({ isTalking }) => {
       
       setPlaying(true);
       try {
-        const audioEl = new Audio(audioUrls[currentPhraseIndex]);
+        const audioEl = new Audio(audioUrls[thoughtIndex]);
         
         audioEl.onended = () => {
           setPlaying(false);
-          setCurrentPhraseIndex((prev) => (prev + 1) % phrases.length);
+          setThoughtIndex((prev) => (prev + 1) % streamOfThought.length);
         };
         
         await audioEl.play();
@@ -80,11 +83,10 @@ const ProviderTTS = ({ isTalking }) => {
     if (isTalking) {
       handleSpeak();
     }
-  }, [isTalking, loading, playing, currentPhraseIndex, audioUrls]);
+  }, [isTalking, loading, playing, thoughtIndex, audioUrls]);
 
-  // Display loading state
   if (loading) {
-    return <div className="text-gray-600">Generating audio files...</div>;
+    return <div>Generating audio files...</div>;
   }
 
   return null;
