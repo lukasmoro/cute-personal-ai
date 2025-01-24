@@ -1,7 +1,8 @@
 import React, {useState, useEffect} from 'react';
 import { Canvas } from '@react-three/fiber';
-// import { ControllerCamera } from './ControllerCamera';
+// import { ControllerR3FCamera } from './ControllerR3FCamera';
 import { ControllerVoiceInput } from './ControllerVoiceInput';
+import { ProviderThoughtStream } from './ProviderThoughtStream';
 import { ProviderWhisper } from './ProviderWhisper';
 import { ProviderTTS } from './ProviderTTS';
 import { ShaderCutePersonalAI } from './ShaderCutePersonalAI';
@@ -87,35 +88,36 @@ export function CanvasCutePersonalAI() {
   }, []);
 
   return (
-    <div className="canvas">
-      <Canvas
-        camera={{
-          position: [0, 0, 14],
-          fov: 80
-        }}
-        gl={{
-          antialias: true,
-          pixelRatio: window.devicePixelRatio,
-          alpha: true,
-          stencil: false,
-          depth: true,
-          powerPreference: "high-performance",
-        }}
-      >
-        {/* <ControllerCamera /> */}
-        <ControllerVoiceInput onAudioData={setAudioData} isListening={isListening}/>
-        <CameraFixer>
-          <ShaderCutePersonalAI targetPosition={targetPosition} />
-          <ShaderVoiceInput targetPosition = {targetPosition} audioData={audioData}/>
-          <ShaderGradientUnderlay targetPosition={targetPosition} />
-        </CameraFixer>
-        <ShaderImageGeneration isDown={isDown} /> 
-      </Canvas>
-      <div className='providers'>
-        <ProviderWhisper isRecording={isRecording} />
-        <ProviderTTS isTalking={isTalking}/>
+    <ProviderThoughtStream>
+      <div className="canvas">
+        <Canvas
+          camera={{
+            position: [0, 0, 14],
+            fov: 80
+          }}
+          gl={{
+            antialias: true,
+            pixelRatio: window.devicePixelRatio,
+            alpha: true,
+            stencil: false,
+            depth: true,
+            powerPreference: "high-performance",
+          }}
+        >
+          {/* <ControllerR3FCamera /> */}
+          <ControllerVoiceInput onAudioData={setAudioData} isListening={isListening}/>
+          <CameraFixer>
+            <ShaderCutePersonalAI targetPosition={targetPosition} />
+            <ShaderVoiceInput targetPosition = {targetPosition} audioData={audioData}/>
+            <ShaderGradientUnderlay targetPosition={targetPosition} />
+          </CameraFixer>
+          <ShaderImageGeneration isDown={isDown} /> 
+        </Canvas>
+        <div className='providers'>
+          <ProviderWhisper isRecording={isRecording} />
+          <ProviderTTS isTalking={isTalking}/>
+        </div>
       </div>
-    </div>
-    
+    </ProviderThoughtStream>
   );
 }

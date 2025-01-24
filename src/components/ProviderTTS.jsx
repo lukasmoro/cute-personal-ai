@@ -1,89 +1,107 @@
-import { useState, useEffect } from 'react';
-import { KokoroTTS } from './kokoro-js/dist/kokoro.js';
+import { useState, useEffect, useMemo, useRef } from "react";
+import { KokoroTTS } from "./kokoro-js/dist/kokoro.js";
+import { useThoughtStream } from "./ProviderThoughtStream";
+import { parseThought } from "./utils/thoughtParser";
 
-// stream of thought should be moved to parent component or even made the new highest order node
-// besides answers it should contain trigger point for mimics & gestures
-// trigger points should refer to json files with structured outputs that influence the assistant visuals
-// other trigger points should initiate actions like image retrieval & generation (image, code, nodes), pulling up chats & agent space
-
-const streamOfThought = [
-  "Hi Lukas, what is on your mind today",
-  "Oh that is cool what about it? This one right?",
-  "We have talked about something along those lines a while ago when you visited Kunstmuseum Bregenz. Do you remember? How do you feel about the future?",
-  "Ok, we can start by finding a rough first direction. Tell me your ideas and I will generate some starting points."
-];
-
-const ProviderTTS = ({ isTalking }) => {
+export const ProviderTTS = ({ isTalking }) => {
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
-  const [audioUrls, setAudioUrls] = useState([]);
-  const [thoughtIndex, setThoughtIndex] = useState(0);
+  const audioUrlsRef = useRef([]);
+  const audioRef = useRef(null);
+  const lastTriggerRef = useRef(false);
+  const { streamOfThought, thoughtIndex, nextThought } = useThoughtStream();
 
+  // get parsed thoughts
+  const cleanThoughts = useMemo(() => {
+    return streamOfThought.map((thought) => parseThought(thought).text);
+  }, [streamOfThought]);
+
+  // initialize TTS & generate audio
   useEffect(() => {
+    let mounted = true;
     const initTTS = async () => {
       try {
-        console.log('Loading TTS model...');
-        const startTime = performance.now();
-        
         const ttsInstance = await KokoroTTS.from_pretrained(
           "onnx-community/Kokoro-82M-ONNX",
           { dtype: "q8" }
         );
-        
-        console.log(`Model loaded in ${performance.now() - startTime}ms`);
-        
         const urls = [];
-        for (const thought of streamOfThought) {
-          const genStart = performance.now();
-          const audio = await ttsInstance.generate(thought, { voice: "af_sky" });
-          console.log(`Generated "${thought}" in ${performance.now() - genStart}ms`);
+        for (const cleanThought of cleanThoughts) {
+          if (!mounted) return;
+          const audio = await ttsInstance.generate(cleanThought, {
+            voice: "af_sky",
+          });
           const wavBuffer = audio.toWav();
-          const audioBlob = new Blob([wavBuffer], { type: 'audio/wav' });
+          const audioBlob = new Blob([wavBuffer], { type: "audio/wav" });
           const audioUrl = URL.createObjectURL(audioBlob);
           urls.push(audioUrl);
         }
-        
-        setAudioUrls(urls);
-        setLoading(false);
-        console.log('All audio pre-generated');
+        if (mounted) {
+          audioUrlsRef.current = urls;
+          setLoading(false);
+        }
       } catch (error) {
-        console.error("TTS loading failed:", error);
-        setLoading(false);
+        console.error("TTS Error:", error);
+        if (mounted) setLoading(false);
       }
     };
-    
-    const urls = [];
+
     initTTS();
 
     return () => {
-      urls.forEach(url => URL.revokeObjectURL(url));
+      mounted = false;
     };
-  }, []);
+  }, [cleanThoughts]);
 
+  // audio playback
   useEffect(() => {
+    if (isTalking === lastTriggerRef.current) {
+      return;
+    }
+    lastTriggerRef.current = isTalking;
+
     const handleSpeak = async () => {
-      if (loading || playing || audioUrls.length === 0) return;
-      
-      setPlaying(true);
+      if (loading || playing || audioUrlsRef.current.length === 0) return;
+
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.onended = null;
+      }
+
       try {
-        const audioEl = new Audio(audioUrls[thoughtIndex]);
-        
-        audioEl.onended = () => {
+        setPlaying(true);
+        audioRef.current = new Audio(audioUrlsRef.current[thoughtIndex]);
+        audioRef.current.onended = () => {
           setPlaying(false);
-          setThoughtIndex((prev) => (prev + 1) % streamOfThought.length);
+          audioRef.current = null;
+          nextThought();
         };
-        
-        await audioEl.play();
+        await audioRef.current.play();
       } catch (error) {
-        console.error('Playback error:', error);
+        console.error("Audio setup error:", error);
         setPlaying(false);
+        audioRef.current = null;
       }
     };
 
-    if (isTalking) {
+    if (isTalking && !playing) {
       handleSpeak();
     }
-  }, [isTalking, loading, playing, thoughtIndex, audioUrls]);
+  }, [isTalking, loading, playing, thoughtIndex, nextThought]);
+
+  // cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.onended = null;
+        audioRef.current = null;
+      }
+      // Clean up audio URLs
+      audioUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      audioUrlsRef.current = [];
+    };
+  }, []);
 
   if (loading) {
     return <div>Generating audio files...</div>;
@@ -91,5 +109,3 @@ const ProviderTTS = ({ isTalking }) => {
 
   return null;
 };
-
-export { ProviderTTS };

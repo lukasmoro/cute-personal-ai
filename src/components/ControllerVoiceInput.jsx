@@ -22,10 +22,8 @@ export const ControllerVoiceInput = ({ onAudioData, isListening }) => {
     }
   }, []);
 
-  // Initialize audio on component mount
   useEffect(() => {
     initializeAudio();
-    // Cleanup
     return () => {
       if (mediaStream) {
         mediaStream.getTracks().forEach(track => track.stop());
@@ -41,7 +39,6 @@ export const ControllerVoiceInput = ({ onAudioData, isListening }) => {
 
     const analyzeAudio = () => {
       if (!analyzer || !isListening) {
-        // If not listening, send zero values
         onAudioData({ low: 0, mid: 0, high: 0, average: 0 });
         return;
       }

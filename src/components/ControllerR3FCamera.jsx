@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 
-export function ControllerCamera({ initialPosition = { x: 0, y: 0, z: 14 } }) {
+export function ControllerR3FCamera({ initialPosition = { x: 0, y: 0, z: 14 } }) {
   const [position, setPosition] = useState(initialPosition);
   const { camera } = useThree();
 
