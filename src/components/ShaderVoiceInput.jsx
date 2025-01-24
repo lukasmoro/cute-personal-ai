@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState} from 'react';
 import { extend, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { MathUtils } from 'three';

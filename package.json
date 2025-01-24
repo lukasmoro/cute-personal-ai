@@ -19,8 +19,8 @@
     "three": "^0.172.0"
   },
   "scripts": {
- "start": "GENERATE_SOURCEMAP=false react-scripts start",
-    "build": "GENERATE_SOURCEMAP=false react-scripts build",
+    "start": "cross-env GENERATE_SOURCEMAP=false react-scripts start",
+    "build": "cross-env GENERATE_SOURCEMAP=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -43,6 +43,7 @@
     ]
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "web-vitals": "^4.2.4"
   }
 }
