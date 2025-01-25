@@ -53,14 +53,8 @@ const ProviderWhisper = ({ isRecording }) => {
           <p>Error: {error}</p>
         </div>
       )}
-      <div className="recording-instruction">
-        <p>Hold SPACEBAR to record</p>
-      </div>
       <div className="status-group"></div>
       <div className="transcript-container">
-        <div className="transcript-label">
-          {recording ? "Real-time Transcript" : "Final Transcript"}
-        </div>
         <div className="transcript-text">
           {transcript?.text || "No transcription yet..."}
         </div>

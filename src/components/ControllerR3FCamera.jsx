@@ -1,14 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
-
-// TO DO
-// implement drag handling on middle mouse for infinite canvas
 
 export function ControllerR3FCamera({
   initialPosition = { x: 0, y: 0, z: 14 },
 }) {
   const [position, setPosition] = useState(initialPosition);
+  const [isDragging, setIsDragging] = useState(false);
+  const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
   const { camera } = useThree();
 
   useFrame(() => {
@@ -24,27 +23,66 @@ export function ControllerR3FCamera({
     );
   });
 
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      switch (event.key) {
-        case "ArrowUp":
-          setPosition((prev) => ({ ...prev, y: prev.y === 0 ? 0 : 0 }));
-          break;
-        case "ArrowDown":
-          setPosition((prev) => ({ ...prev, y: prev.y === 8 ? 0 : 8 }));
-          break;
-        case "ArrowLeft":
-          setPosition((prev) => ({ ...prev, x: prev.x === 10 ? 0 : 10 }));
-          break;
-        case "ArrowRight":
-          setPosition((prev) => ({ ...prev, x: prev.x === 0 ? 0 : 0 }));
-          break;
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+  const handleWheel = useCallback((event) => {
+    if (Math.abs(event.deltaY) < 40) {
+      setPosition((prev) => ({
+        ...prev,
+        x: prev.x + event.deltaX * 0.1,
+        y: prev.y - event.deltaY * 0.1,
+      }));
+      event.preventDefault();
+    }
   }, []);
+
+  const handleMouseDown = useCallback((event) => {
+    if (event.button === 1) {
+      setIsDragging(true);
+      setLastMousePosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+    }
+  }, []);
+
+  const handleMouseMove = useCallback((event) => {
+    if (!isDragging) return;
+
+    const deltaX = (event.clientX - lastMousePosition.x) * 0.01;
+    const deltaY = (event.clientY - lastMousePosition.y) * 0.01;
+
+    setPosition((prev) => ({
+      ...prev,
+      x: prev.x - deltaX,
+      y: prev.y + deltaY,
+    }));
+
+    setLastMousePosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
+  }, [isDragging, lastMousePosition]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    
+    const preventContext = (e) => e.preventDefault();
+    window.addEventListener("contextmenu", preventContext);
+
+    return () => {
+      window.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("contextmenu", preventContext);
+    };
+  }, [handleMouseDown, handleMouseMove, handleMouseUp, handleWheel]);
 
   return null;
 }

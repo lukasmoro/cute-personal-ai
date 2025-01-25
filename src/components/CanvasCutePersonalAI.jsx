@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import { ControllerVoiceInput } from "./ControllerVoiceInput";
-import { ContextThoughtStream } from "./ContextThoughtStream";
+import { ControllerR3FCamera } from "./ControllerR3FCamera";
 import { ProviderWhisper } from "./ProviderWhisper";
 import { ProviderTTS } from "./ProviderTTS";
 import { ShaderCutePersonalAI } from "./ShaderCutePersonalAI";
@@ -9,6 +9,7 @@ import { ShaderVoiceInput } from "./ShaderVoiceInput";
 import { ShaderGradientUnderlay } from "./ShaderGradientUnderlay";
 import { ShaderImageGeneration } from "./ShaderImageGeneration";
 import { CameraFixer } from "./CameraFixer";
+import { ContextThoughtStream } from "./ContextThoughtStream";
 import { ContextSpeechStream } from "./ContextSpeechStream";
 import "./CanvasCutePersonalAI.css";
 
@@ -34,7 +35,6 @@ export function CanvasCutePersonalAI() {
         setIsRecording(true);
       }
     };
-
     const handleKeyUp = (e) => {
       if (e.code === "Space") {
         setIsListening(false);
@@ -43,10 +43,8 @@ export function CanvasCutePersonalAI() {
         setTimeout(() => setIsTalking(false), 100);
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
@@ -60,9 +58,8 @@ export function CanvasCutePersonalAI() {
       left: [-14, 0, 0],
       right: [14, 0, 0],
       top: [0, 8, 0],
-      bottom: [0, -7, 0],
+      bottom: [0, -8.5, 0],
     };
-
     const handleEvent = (event) => {
       switch (event.key.toLowerCase()) {
         case "arrowleft":
@@ -84,7 +81,6 @@ export function CanvasCutePersonalAI() {
           break;
       }
     };
-
     window.addEventListener("keydown", handleEvent);
     return () => window.removeEventListener("keydown", handleEvent);
   }, []);
@@ -107,6 +103,7 @@ export function CanvasCutePersonalAI() {
               powerPreference: "high-performance",
             }}
           >
+            <ControllerR3FCamera initialPosition={{ x: 0, y: 0, z: 14 }} />
             <ControllerVoiceInput
               onAudioData={setAudioData}
               isListening={isListening}
