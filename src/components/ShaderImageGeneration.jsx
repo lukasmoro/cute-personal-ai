@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { extend, useFrame, useLoader } from '@react-three/fiber';
-import * as THREE from 'three';
-import { shaderMaterial } from '@react-three/drei';
+import React, { useRef, useState, useEffect } from "react";
+import { extend, useFrame, useLoader } from "@react-three/fiber";
+import * as THREE from "three";
+import { shaderMaterial } from "@react-three/drei";
 
 const MaterialImageGeneration = shaderMaterial(
   {
@@ -70,13 +70,13 @@ extend({ MaterialImageGeneration });
 export const ShaderImageGeneration = ({ isDown = false }) => {
   // references
   const shaderRef = useRef();
-  
+
   // constants
-  const texture = useLoader(THREE.TextureLoader, './lavender.jpg');
+  const texture = useLoader(THREE.TextureLoader, "./zumthor.png");
   const BLUR_STRENGTH = 2;
   const BLUR_DURATION = 0.95;
   const BLUR_FADE_OUT = 0.5;
-  
+
   //states
   const [scale, setScale] = useState(0);
   const [blur, setBlur] = useState(2);
@@ -98,7 +98,7 @@ export const ShaderImageGeneration = ({ isDown = false }) => {
 
   useFrame((state, delta) => {
     if (!shaderRef.current) return;
-    
+
     shaderRef.current.u_time += delta;
     shaderRef.current.u_resolution.set(
       state.size.width * state.viewport.dpr,
@@ -110,7 +110,7 @@ export const ShaderImageGeneration = ({ isDown = false }) => {
       const diff = targetScale - scale;
       const easeStrength = 0.075;
       const newScale = scale + diff * easeStrength;
-      
+
       if (Math.abs(diff) < 0.001) {
         setScale(targetScale);
         setIsAnimating(false);

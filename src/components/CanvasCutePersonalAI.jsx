@@ -1,38 +1,42 @@
-import React, {useState, useEffect} from 'react';
-import { Canvas } from '@react-three/fiber';
-// import { ControllerR3FCamera } from './ControllerR3FCamera';
-import { ControllerVoiceInput } from './ControllerVoiceInput';
-import { ProviderThoughtStream } from './ProviderThoughtStream';
-import { ProviderWhisper } from './ProviderWhisper';
-import { ProviderTTS } from './ProviderTTS';
-import { ShaderCutePersonalAI } from './ShaderCutePersonalAI';
-import { ShaderVoiceInput } from './ShaderVoiceInput'
-import { ShaderGradientUnderlay } from './ShaderGradientUnderlay';
-import { ShaderImageGeneration } from './ShaderImageGeneration';
-import { CameraFixer } from './CameraFixer';
-import './CanvasCutePersonalAI.css';
-
+import React, { useState, useEffect } from "react";
+import { Canvas } from "@react-three/fiber";
+import { ControllerVoiceInput } from "./ControllerVoiceInput";
+import { ContextThoughtStream } from "./ContextThoughtStream";
+import { ProviderWhisper } from "./ProviderWhisper";
+import { ProviderTTS } from "./ProviderTTS";
+import { ShaderCutePersonalAI } from "./ShaderCutePersonalAI";
+import { ShaderVoiceInput } from "./ShaderVoiceInput";
+import { ShaderGradientUnderlay } from "./ShaderGradientUnderlay";
+import { ShaderImageGeneration } from "./ShaderImageGeneration";
+import { CameraFixer } from "./CameraFixer";
+import { ContextSpeechStream } from "./ContextSpeechStream";
+import "./CanvasCutePersonalAI.css";
 
 export function CanvasCutePersonalAI() {
-  
   // states & flags
   const [targetPosition, setTargetPosition] = useState([0, 0, 0]);
-  let isDown = targetPosition[1] < -5;
-  const [audioData, setAudioData] = useState({ low: 0, mid: 0, high: 0, average: 0 });
+  const isDown = targetPosition[1] < -5;
+  const [audioData, setAudioData] = useState({
+    low: 0,
+    mid: 0,
+    high: 0,
+    average: 0,
+  });
   const [isListening, setIsListening] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTalking, setIsTalking] = useState(false);
 
+  // event handler 'SPACE'
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.code === 'Space' && !e.repeat) {
+      if (e.code === "Space" && !e.repeat) {
         setIsListening(true);
         setIsRecording(true);
       }
     };
 
     const handleKeyUp = (e) => {
-      if (e.code === 'Space') {
+      if (e.code === "Space") {
         setIsListening(false);
         setIsRecording(false);
         setIsTalking(true);
@@ -40,42 +44,40 @@ export function CanvasCutePersonalAI() {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
 
-
+  // event handler 'ARROW UP + DOWN + LEFT + RIGHT + A' + positions state updater of cute personal ai
   useEffect(() => {
-
-    // positions for shader meshes
     const positions = {
       center: [0, 0, 0],
       left: [-14, 0, 0],
       right: [14, 0, 0],
       top: [0, 8, 0],
-      bottom: [0, -7, 0]
+      bottom: [0, -7, 0],
     };
 
     const handleEvent = (event) => {
-      switch(event.key.toLowerCase()) {
-        case 'arrowleft':
+      switch (event.key.toLowerCase()) {
+        case "arrowleft":
           setTargetPosition(positions.left);
           break;
-        case 'arrowright':
+        case "arrowright":
           setTargetPosition(positions.right);
           break;
-        case 'arrowup':
+        case "arrowup":
           setTargetPosition(positions.top);
           break;
-        case 'arrowdown':
+        case "arrowdown":
           setTargetPosition(positions.bottom);
           break;
-        case 'a':
+        case "a":
           setTargetPosition(positions.center);
           break;
         default:
@@ -83,41 +85,48 @@ export function CanvasCutePersonalAI() {
       }
     };
 
-    window.addEventListener('keydown', handleEvent);
-    return () => window.removeEventListener('keydown', handleEvent);
+    window.addEventListener("keydown", handleEvent);
+    return () => window.removeEventListener("keydown", handleEvent);
   }, []);
 
   return (
-    <ProviderThoughtStream>
-      <div className="canvas">
-        <Canvas
-          camera={{
-            position: [0, 0, 14],
-            fov: 80
-          }}
-          gl={{
-            antialias: true,
-            pixelRatio: window.devicePixelRatio,
-            alpha: true,
-            stencil: false,
-            depth: true,
-            powerPreference: "high-performance",
-          }}
-        >
-          {/* <ControllerR3FCamera /> */}
-          <ControllerVoiceInput onAudioData={setAudioData} isListening={isListening}/>
-          <CameraFixer>
-            <ShaderCutePersonalAI targetPosition={targetPosition} />
-            <ShaderVoiceInput targetPosition = {targetPosition} audioData={audioData}/>
-            <ShaderGradientUnderlay targetPosition={targetPosition} />
-          </CameraFixer>
-          <ShaderImageGeneration isDown={isDown} /> 
-        </Canvas>
-        <div className='providers'>
-          <ProviderWhisper isRecording={isRecording} />
-          <ProviderTTS isTalking={isTalking}/>
+    <ContextThoughtStream>
+      <ContextSpeechStream>
+        <div className="canvas">
+          <Canvas
+            camera={{
+              position: [0, 0, 14],
+              fov: 80,
+            }}
+            gl={{
+              antialias: true,
+              pixelRatio: window.devicePixelRatio,
+              alpha: true,
+              stencil: false,
+              depth: true,
+              powerPreference: "high-performance",
+            }}
+          >
+            <ControllerVoiceInput
+              onAudioData={setAudioData}
+              isListening={isListening}
+            />
+            <CameraFixer>
+              <ShaderCutePersonalAI targetPosition={targetPosition} />
+              <ShaderVoiceInput
+                targetPosition={targetPosition}
+                audioData={audioData}
+              />
+              <ShaderGradientUnderlay targetPosition={targetPosition} />
+            </CameraFixer>
+            <ShaderImageGeneration isDown={isDown} />
+          </Canvas>
+          <div className="providers">
+            <ProviderWhisper isRecording={isRecording} />
+            <ProviderTTS isTalking={isTalking} />
+          </div>
         </div>
-      </div>
-    </ProviderThoughtStream>
+      </ContextSpeechStream>
+    </ContextThoughtStream>
   );
 }

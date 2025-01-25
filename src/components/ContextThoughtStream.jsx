@@ -1,12 +1,14 @@
-import React, { createContext, useState, useContext, useMemo } from 'react';
-import { parseThought } from './utils/thoughtParser';
+import React, { createContext, useState, useContext, useMemo } from "react";
+import { parseThought } from "./utils/thoughtParser";
 
 const ThoughtStreamContext = createContext();
 
 export const useThoughtStream = () => {
   const context = useContext(ThoughtStreamContext);
   if (!context) {
-    throw new Error('useThoughtStream must be used within a ThoughtStreamProvider');
+    throw new Error(
+      "useThoughtStream must be used within a ThoughtStreamProvider"
+    );
   }
   return context;
 };
@@ -27,16 +29,16 @@ export const useSpokenText = () => {
   return currentParsedThought.text;
 };
 
-export const ProviderThoughtStream = ({ children }) => {
+export const ContextThoughtStream = ({ children }) => {
   const [streamOfThought, setStreamOfThought] = useState([
     "[gesture: greeting] [mimic: friendly] Hi Lukas, what is on your mind today",
     "[mimic: curious] Oh that is cool what about it? [gesture: pointing] This one right?",
     "[gesture: explaining] [mimic: calm] We have talked about something along those lines a while ago when you visited Kunstmuseum Bregenz. [mimic: happy] Do you remember? [gesture: explaining] How do you feel about the future?",
-    "[gesture: thinking] [mimic: focused] Ok, we can start by finding a rough first direction. [gesture: explaining] Tell me your ideas and I will generate some starting points."
+    "[gesture: thinking] [mimic: focused] Ok, we can start by finding a rough first direction. [gesture: explaining] Tell me your ideas and I will generate some starting points.",
   ]);
-  
+
   const [thoughtIndex, setThoughtIndex] = useState(0);
-  
+
   // parse current thought
   const currentParsedThought = useMemo(() => {
     return parseThought(streamOfThought[thoughtIndex]);
@@ -47,7 +49,7 @@ export const ProviderThoughtStream = ({ children }) => {
   };
 
   const addThought = (thought) => {
-    setStreamOfThought(prev => [...prev, thought]);
+    setStreamOfThought((prev) => [...prev, thought]);
   };
 
   const value = {
@@ -56,7 +58,7 @@ export const ProviderThoughtStream = ({ children }) => {
     currentParsedThought,
     nextThought,
     addThought,
-    setStreamOfThought
+    setStreamOfThought,
   };
 
   return (

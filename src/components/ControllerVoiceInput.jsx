@@ -1,14 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
+
 export const ControllerVoiceInput = ({ onAudioData, isListening }) => {
- 
+  
+  // states
   const [audioContext, setAudioContext] = useState(null);
   const [analyzer, setAnalyzer] = useState(null);
   const [mediaStream, setMediaStream] = useState(null);
+  
+  // initialise microphone
   const initializeAudio = useCallback(async () => {
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const context = new (window.AudioContext || window.webkitAudioContext)();
+      const context = new (window.AudioContext)();
       const analyzerNode = context.createAnalyser();
       analyzerNode.fftSize = 256;
       analyzerNode.smoothingTimeConstant = 0.8;
@@ -20,7 +23,6 @@ export const ControllerVoiceInput = ({ onAudioData, isListening }) => {
     } catch (error) {
       console.error("Error accessing microphone:", error);
     }
-
   }, []);
 
   useEffect(() => {
@@ -35,6 +37,7 @@ export const ControllerVoiceInput = ({ onAudioData, isListening }) => {
     };
   }, []);
 
+  // sequence audio data & update state of audio context
   useEffect(() => {
     let animationFrame;
     const analyzeAudio = () => {
@@ -67,6 +70,6 @@ export const ControllerVoiceInput = ({ onAudioData, isListening }) => {
       }
     };
   }, [analyzer, onAudioData, isListening]);
-  
+
   return null;
 };

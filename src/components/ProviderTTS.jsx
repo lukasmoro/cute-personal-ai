@@ -1,18 +1,27 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { KokoroTTS } from "./kokoro-js/dist/kokoro.js";
-import { useThoughtStream } from "./ProviderThoughtStream";
+import { useThoughtStream } from "./ContextThoughtStream.jsx";
 import { parseThought } from "./utils/thoughtParser";
+import { useSpeechStream } from "./ContextSpeechStream";
 
 export const ProviderTTS = ({ isTalking }) => {
+  
+  // states
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
+
+  // references
   const audioUrlsRef = useRef([]);
   const audioRef = useRef(null);
   const lastTriggerRef = useRef(false);
-  const { streamOfThought, thoughtIndex, nextThought } = useThoughtStream();
+  const progressIntervalRef = useRef(null);
 
-  // get parsed thoughts
-  const cleanThoughts = useMemo(() => {
+  // context
+  const { streamOfThought, thoughtIndex, nextThought } = useThoughtStream();
+  const { updateAudioTime, setPlaying: setContextPlaying } = useSpeechStream();
+
+  // cache thoughts between re-renders
+  const cachedThoughts = useMemo(() => {
     return streamOfThought.map((thought) => parseThought(thought).text);
   }, [streamOfThought]);
 
@@ -26,9 +35,9 @@ export const ProviderTTS = ({ isTalking }) => {
           { dtype: "q8" }
         );
         const urls = [];
-        for (const cleanThought of cleanThoughts) {
+        for (const cachedThought of cachedThoughts) {
           if (!mounted) return;
-          const audio = await ttsInstance.generate(cleanThought, {
+          const audio = await ttsInstance.generate(cachedThought, {
             voice: "af_sky",
           });
           const wavBuffer = audio.toWav();
@@ -45,13 +54,33 @@ export const ProviderTTS = ({ isTalking }) => {
         if (mounted) setLoading(false);
       }
     };
-
     initTTS();
-
     return () => {
       mounted = false;
     };
-  }, [cleanThoughts]);
+  }, [cachedThoughts]);
+
+  // start time tracking
+  const startTimeTracking = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    progressIntervalRef.current = setInterval(() => {
+      if (audioRef.current) {
+        updateAudioTime(audioRef.current.currentTime);
+      }
+    }, 16);
+  };
+
+  // stop time tracking
+  const stopTimeTracking = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    updateAudioTime(0);
+  };
 
   // audio playback
   useEffect(() => {
@@ -66,20 +95,29 @@ export const ProviderTTS = ({ isTalking }) => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.onended = null;
+        stopTimeTracking();
       }
 
       try {
         setPlaying(true);
+        setContextPlaying(true);
+
         audioRef.current = new Audio(audioUrlsRef.current[thoughtIndex]);
         audioRef.current.onended = () => {
           setPlaying(false);
+          setContextPlaying(false);
+          stopTimeTracking();
           audioRef.current = null;
           nextThought();
         };
+
         await audioRef.current.play();
+        startTimeTracking();
       } catch (error) {
         console.error("Audio setup error:", error);
         setPlaying(false);
+        setContextPlaying(false);
+        stopTimeTracking();
         audioRef.current = null;
       }
     };
@@ -87,7 +125,15 @@ export const ProviderTTS = ({ isTalking }) => {
     if (isTalking && !playing) {
       handleSpeak();
     }
-  }, [isTalking, loading, playing, thoughtIndex, nextThought]);
+  }, [
+    isTalking,
+    loading,
+    playing,
+    thoughtIndex,
+    nextThought,
+    setContextPlaying,
+    updateAudioTime,
+  ]);
 
   // cleanup on unmount
   useEffect(() => {
@@ -97,15 +143,15 @@ export const ProviderTTS = ({ isTalking }) => {
         audioRef.current.onended = null;
         audioRef.current = null;
       }
-      // Clean up audio URLs
+      stopTimeTracking();
       audioUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
       audioUrlsRef.current = [];
     };
   }, []);
 
+  // display loader while generating files
   if (loading) {
     return <div>Generating audio files...</div>;
   }
-
   return null;
 };

@@ -1,8 +1,8 @@
-import { useRef, useState} from 'react';
-import { extend, useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
-import { MathUtils } from 'three';
-import { shaderMaterial } from '@react-three/drei';
+import { useRef, useState } from "react";
+import { extend, useFrame } from "@react-three/fiber";
+import * as THREE from "three";
+import { MathUtils } from "three";
+import { shaderMaterial } from "@react-three/drei";
 
 const MaterialVoiceInput = shaderMaterial(
   {
@@ -11,7 +11,7 @@ const MaterialVoiceInput = shaderMaterial(
     u_audioLow: 0,
     u_audioMid: 0,
     u_audioHigh: 0,
-    u_audioAverage: 0
+    u_audioAverage: 0,
   },
   // vertex shader
   `
@@ -59,7 +59,7 @@ export const ShaderVoiceInput = ({
   const shaderRef = useRef();
   const meshRef = useRef();
   const [currentPosition, setCurrentPosition] = useState(targetPosition);
-  
+
   useFrame(() => {
     if (!meshRef.current) return;
     const newX = MathUtils.lerp(currentPosition[0], targetPosition[0], 0.05);
@@ -83,10 +83,7 @@ export const ShaderVoiceInput = ({
   });
 
   return (
-    <mesh
-      ref={meshRef}
-      position={currentPosition}
-    >
+    <mesh ref={meshRef} position={currentPosition}>
       <planeGeometry args={[10, 10, 64, 64]} />
       <materialVoiceInput ref={shaderRef} transparent />
     </mesh>

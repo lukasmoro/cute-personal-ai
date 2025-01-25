@@ -1,18 +1,19 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { extend, useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
-import { MathUtils } from 'three';
-import { shaderMaterial } from '@react-three/drei';
+import React, { useRef, useState, useEffect } from "react";
+import { extend, useFrame } from "@react-three/fiber";
+import * as THREE from "three";
+import { MathUtils } from "three";
+import { shaderMaterial } from "@react-three/drei";
 
 const MaterialCutePersonalAI = shaderMaterial(
-  {
+  { 
+    // uniforms for time, resolution, morphstate & dotVisibility (for transition animation)
     u_time: 0,
     u_resolution: new THREE.Vector2(0, 0),
     u_morphState: 0,
     u_dotVisibility: 1.0,
   },
-  
-  // vertex shader remains the same
+
+  // vertex shader
   `
     varying vec2 vUv;
     void main() {
@@ -20,7 +21,7 @@ const MaterialCutePersonalAI = shaderMaterial(
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `,
-  
+
   // fragment shader
   `
     precision highp float;
@@ -90,12 +91,11 @@ const MaterialCutePersonalAI = shaderMaterial(
 
 extend({ MaterialCutePersonalAI });
 
-export const ShaderCutePersonalAI = ({ 
+export const ShaderCutePersonalAI = ({
   targetPosition = [0, 0, 0],
   dotVisible = true,
-  onAnimationComplete = () => {}
+  onAnimationComplete = () => {},
 }) => {
-  
   // references
   const shaderRef = useRef();
   const meshRef = useRef();
@@ -118,7 +118,7 @@ export const ShaderCutePersonalAI = ({
   const handleClick = () => {
     setTargetState(morphState < 0.5 ? 1.0 : 0.0);
     setIsAnimating(true);
-    setLocalDotVisible(true); // Reset dot visibility when animation starts
+    setLocalDotVisible(true);
   };
 
   // position animation
@@ -157,11 +157,7 @@ export const ShaderCutePersonalAI = ({
   });
 
   return (
-    <mesh 
-      onClick={handleClick} 
-      ref={meshRef}
-      position={currentPosition}
-    >
+    <mesh onClick={handleClick} ref={meshRef} position={currentPosition}>
       <planeGeometry args={[10, 10, 64, 64]} />
       <materialCutePersonalAI ref={shaderRef} transparent />
     </mesh>
