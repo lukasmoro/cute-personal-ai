@@ -5,11 +5,6 @@ const ThoughtStreamContext = createContext();
 
 export const useThoughtStream = () => {
   const context = useContext(ThoughtStreamContext);
-  if (!context) {
-    throw new Error(
-      "useThoughtStream must be used within a ThoughtStreamProvider"
-    );
-  }
   return context;
 };
 
@@ -24,17 +19,24 @@ export const useMimics = () => {
   return currentParsedThought.mimic;
 };
 
+export const useActions = () => {
+  const { currentParsedThought } = useThoughtStream();
+  return currentParsedThought.action;
+};
+
 export const useSpokenText = () => {
   const { currentParsedThought } = useThoughtStream();
   return currentParsedThought.text;
 };
 
+
 export const ContextThoughtStream = ({ children }) => {
   const [streamOfThought, setStreamOfThought] = useState([
     "[gesture: greeting] [mimic: friendly] Hi Lukas, what is on your mind today",
-    "[mimic: curious] Oh that is cool what about it? [gesture: pointing] This one right?",
+    "[mimic: curious] Oh that is cool what about it? [gesture: pointing] This one right? [action: display image: zumthor.png/huyghes.png/klimt.png]",
     "[gesture: explaining] [mimic: calm] We have talked about something along those lines a while ago when you visited Kunstmuseum Bregenz. [mimic: happy] Do you remember? [gesture: explaining] How do you feel about the future?",
     "[gesture: thinking] [mimic: focused] Ok, we can start by finding a rough first direction. [gesture: explaining] Tell me your ideas and I will generate some starting points.",
+    "[gesture: concentrated] [mimic: flow] Here is a first direction combining those visuals. [action: generate image from zumthor.png/huyghes.png & prompt] [action: display image: result1.png] [action: connect zumthor.png/huyghes.png to result1.png]",
   ]);
 
   const [thoughtIndex, setThoughtIndex] = useState(0);

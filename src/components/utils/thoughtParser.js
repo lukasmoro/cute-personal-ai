@@ -5,11 +5,12 @@ export const parseThought = (thought) => {
   const markers = {
     gesture: [],
     mimic: [],
+    action: [],
     text: thought,
     timeline: [],
   };
 
-  const markerRegex = /\[([\w]+):\s*([\w\s]+)\]/g;
+  const markerRegex = /\[([\w]+):\s*([\w\s:/.&]+)\]/g;
   const matches = [...thought.matchAll(markerRegex)];
 
   const cleanText = thought.replace(markerRegex, "").trim();
